@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TALLY — one puzzle a day</title>
+<meta name="description" content="A daily arithmetic puzzle. Combine four numbers to hit the target. One shot a day.">
+
+<!--
+  ============================================================
+  GOOGLE ADSENSE — SETUP INSTRUCTIONS
+  ============================================================
+  1. Get approved at https://www.google.com/adsense/ (requires
+     the site to be live on a real domain with some content history).
+  2. Paste your loader script here, replacing ca-pub-XXXXXXXXXXXXXXXX:
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+  3. There are two ad slots already placed in the HTML below,
+     marked with "AD SLOT". Replace each placeholder <div> with
+     your <ins class="adsbygoogle"> snippet from the AdSense dashboard.
+  4. Don't add more than these two slots at first — fewer, well-placed
+     ads keep people playing daily, which is what actually drives revenue.
+  ============================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #1B2A22;
+    --bg-soft: #22342A;
+    --chalk: #F4ECD8;
+    --chalk-dim: #C9C3AF;
+    --mustard: #E8B33D;
+    --sage: #6FA88F;
+    --rust: #D96B4A;
+    --line: rgba(244,236,216,0.14);
+    --radius: 14px;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+
+  body{
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(244,236,216,0.03), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(244,236,216,0.03), transparent 40%);
+    color: var(--chalk);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    min-height: 100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  a{ color: var(--mustard); }
+
+  .wrap{
+    width:100%;
+    max-width: 480px;
+    padding: 20px 16px 40px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 4px 2px 18px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+  }
+  .logo{
+    font-family: 'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size: 1.4rem;
+    letter-spacing: 0.04em;
+    display:flex;
+    align-items:baseline;
+    gap: 8px;
+  }
+  .logo .dot{ color: var(--mustard); }
+  .day-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--chalk-dim);
+    text-transform:uppercase;
+    letter-spacing: 0.08em;
+  }
+  .streak{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .tally-marks{ display:flex; align-items:flex-end; gap:2px; height: 18px; }
+  .tally-marks .grp{ position:relative; display:flex; }
+  .tally-marks .bar{ width:2px; height:16px; background:var(--mustard); border-radius:1px; }
+  .tally-marks .bar + .bar{ margin-left:3px; }
+  .tally-marks .slash{
+    position:absolute; left:-3px; top:50%;
+    width: 22px; height:2px; background:var(--rust);
+    transform: translateY(-50%) rotate(-32deg);
+    border-radius:1px;
+  }
+  .streak-num{ font-weight:700; font-size:1rem; }
+  .help-btn{
+    background:none; border:1px solid var(--line); color:var(--chalk-dim);
+    width:26px; height:26px; border-radius:50%; font-family:'JetBrains Mono',monospace;
+    cursor:pointer; font-size:0.8rem; margin-left:10px;
+  }
+  .help-btn:hover, .help-btn:focus-visible{ border-color: var(--mustard); color:var(--mustard); }
+
+  /* ---------- Ad slot styling ---------- */
+  .ad-slot{
+    width:100%;
+    min-height: 90px;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--chalk-dim);
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    margin: 18px 0;
+  }
+
+  /* ---------- Target ---------- */
+  .target-card{
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    padding: 22px 18px;
+    text-align:center;
+    margin-bottom: 22px;
+    border: 1px solid var(--line);
+  }
+  .target-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--chalk-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+  }
+  .target-num{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size: 2.6rem;
+    color: var(--mustard);
+    line-height:1;
+  }
+  .moves-left{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--chalk-dim);
+    margin-top: 8px;
+  }
+
+  /* ---------- Board ---------- */
+  .board{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 12px;
+    justify-content:center;
+    margin-bottom: 18px;
+    min-height: 84px;
+  }
+  .tile{
+    background: var(--chalk);
+    color: #1B2A22;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size: 1.5rem;
+    width: 76px;
+    height: 76px;
+    border-radius: 10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    border: none;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.25);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
+    position:relative;
+  }
+  .tile:hover, .tile:focus-visible{ transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.25); outline:none; }
+  .tile.selected{
+    background: var(--mustard);
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.25);
+  }
+  .tile.merging{ animation: puff 0.35s ease forwards; }
+  @keyframes puff{
+    0%{ transform: scale(1); opacity:1; }
+    100%{ transform: scale(0.3); opacity:0; }
+  }
+  .tile.arriving{ animation: settle 0.3s ease; }
+  @keyframes settle{
+    0%{ transform: scale(0.4); opacity:0; }
+    100%{ transform: scale(1); opacity:1; }
+  }
+
+  /* ---------- Operator picker ---------- */
+  .op-picker{
+    display:flex;
+    justify-content:center;
+    gap: 10px;
+    margin-bottom: 18px;
+    min-height: 48px;
+  }
+  .op-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size: 1.1rem;
+    background: var(--bg-soft);
+    color: var(--chalk);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    width: 52px;
+    height: 44px;
+    cursor:pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .op-btn:hover, .op-btn:focus-visible{ border-color: var(--sage); color: var(--sage); outline:none; }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display:flex;
+    justify-content:center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .ctrl-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    background:none;
+    color: var(--chalk-dim);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor:pointer;
+    letter-spacing:0.03em;
+  }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible{ color: var(--chalk); border-color: var(--chalk-dim); outline:none; }
+  .ctrl-btn:disabled{ opacity:0.35; cursor:default; }
+
+  /* ---------- Result panel ---------- */
+  .result{
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    padding: 24px 20px;
+    text-align:center;
+    display:none;
+  }
+  .result.show{ display:block; }
+  .result h2{
+    font-family:'JetBrains Mono', monospace;
+    margin: 0 0 6px;
+    font-size: 1.3rem;
+  }
+  .result.win h2{ color: var(--sage); }
+  .result.lose h2{ color: var(--rust); }
+  .result p{ color: var(--chalk-dim); font-size: 0.9rem; margin: 4px 0 16px; }
+  .share-grid{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-bottom: 16px;
+  }
+  .share-grid span{
+    width:22px; height:22px; border-radius:5px;
+    display:inline-block;
+  }
+  .countdown{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--chalk-dim);
+    margin-top: 10px;
+  }
+  .countdown b{ color: var(--mustard); }
+  .share-btn{
+    font-family:'JetBrains Mono', monospace;
+    background: var(--mustard);
+    color: #1B2A22;
+    border:none;
+    border-radius:8px;
+    padding: 10px 20px;
+    font-weight:700;
+    cursor:pointer;
+    font-size:0.85rem;
+  }
+
+  /* ---------- How to play modal ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55);
+    display:none; align-items:center; justify-content:center; padding:20px; z-index:10;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal{
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    max-width: 380px;
+    width:100%;
+  }
+  .modal h3{ margin-top:0; font-family:'JetBrains Mono', monospace; color:var(--mustard); }
+  .modal p, .modal li{ font-size: 0.9rem; color: var(--chalk-dim); line-height:1.5; }
+  .modal button{
+    margin-top: 14px;
+    width:100%;
+    background: var(--mustard);
+    border:none; border-radius:8px; padding:10px;
+    font-family:'JetBrains Mono', monospace; font-weight:700;
+    cursor:pointer;
+  }
+
+  footer{
+    text-align:center;
+    color: var(--chalk-dim);
+    font-size: 0.7rem;
+    font-family:'JetBrains Mono', monospace;
+    margin-top: 30px;
+    opacity:0.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="logo">TALLY<span class="dot">.</span></div>
+      <div class="day-label" id="dayLabel">—</div>
+    </div>
+    <div class="streak">
+      <div class="tally-marks" id="tallyMarks"></div>
+      <span class="streak-num" id="streakNum">0</span>
+      <button class="help-btn" id="helpBtn" aria-label="How to play">?</button>
+    </div>
+  </header>
+
+  <!-- AD SLOT 1: top banner, replace with your <ins class="adsbygoogle"> tag -->
+  <div class="ad-slot" id="adSlotTop">Ad space</div>
+
+  <div class="target-card">
+    <div class="target-label">Reach</div>
+    <div class="target-num" id="targetNum">—</div>
+    <div class="moves-left" id="movesLeft"></div>
+  </div>
+
+  <div class="board" id="board" role="group" aria-label="Number tiles"></div>
+  <div class="op-picker" id="opPicker"></div>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="undoBtn">Undo</button>
+    <button class="ctrl-btn" id="resetBtn">Reset board</button>
+  </div>
+
+  <div class="result" id="result">
+    <h2 id="resultTitle"></h2>
+    <p id="resultSub"></p>
+    <div class="share-grid" id="shareGrid"></div>
+    <button class="share-btn" id="shareBtn">Copy result</button>
+    <div class="countdown" id="countdown"></div>
+  </div>
+
+  <!-- AD SLOT 2: shown after the day's puzzle is complete — replace with your <ins class="adsbygoogle"> tag -->
+  <div class="ad-slot" id="adSlotBottom" style="display:none;">Ad space</div>
+
+  <footer>One puzzle a day. Same puzzle for everyone.</footer>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3>How to play</h3>
+    <p>Four number tiles. One target. Combine tiles two at a time with +, −, ×, or ÷ until only one tile is left.</p>
+    <p>Tap a tile, tap a second tile, then pick an operator. If the last tile left matches the target, you win the day.</p>
+    <p>Everyone gets the same puzzle, once a day. Miss a day and your streak resets.</p>
+    <button id="modalClose">Got it</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Seeded RNG (mulberry32) ----------
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function hashStr(s){
+    var h = 0;
+    for(var i=0;i<s.length;i++){ h = (Math.imul(31,h) + s.charCodeAt(i))|0; }
+    return h;
+  }
+  function todayKey(){
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+  function dayNumber(){
+    var epoch = new Date(2026,0,1);
+    var now = new Date();
+    var diff = Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate()) - epoch) / 86400000);
+    return Math.max(1, diff + 1);
+  }
+
+  // ---------- Puzzle generation (guaranteed solvable: built from real gameplay) ----------
+  function genPuzzle(seedStr){
+    var rnd = mulberry32(hashStr(seedStr));
+    var nums = [];
+    for(var i=0;i<4;i++) nums.push(1 + Math.floor(rnd()*9));
+
+    var pool = nums.slice();
+    var solutionSteps = [];
+    while(pool.length > 1){
+      var i1 = Math.floor(rnd()*pool.length);
+      var a = pool[i1]; pool.splice(i1,1);
+      var i2 = Math.floor(rnd()*pool.length);
+      var b = pool[i2]; pool.splice(i2,1);
+
+      var ops = ["+","-","×"];
+      if(a % b === 0 || b % a === 0) ops.push("÷");
+      var op = ops[Math.floor(rnd()*ops.length)];
+      var res;
+      if(op === "+") res = a+b;
+      else if(op === "-") res = Math.abs(a-b);
+      else if(op === "×") res = a*b;
+      else res = (a % b === 0) ? a/b : b/a;
+
+      solutionSteps.push({a:a,b:b,op:op,res:res});
+      pool.push(res);
+    }
+    var target = pool[0];
+    // avoid degenerate targets of 0 or 1 (too trivial) — nudge seed if so
+    if(target <= 1){
+      return genPuzzle(seedStr + "x");
+    }
+    return { nums: nums, target: target };
+  }
+
+  // ---------- State ----------
+  var key = todayKey();
+  var puzzle = genPuzzle(key);
+  var tiles = puzzle.nums.map(function(v,i){ return {id: "t"+i+"_"+Math.random().toString(36).slice(2), val: v}; });
+  var history = [];      // for undo: snapshots of tiles[]
+  var selected = [];      // selected tile ids
+  var movesUsed = 0;
+  var maxMoves = 3;       // 4 tiles -> 1 tile always takes exactly 3 combines
+  var finished = false;
+
+  var STORAGE_KEY = "tally_state_v1";
+  function loadStorage(){
+    try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+    catch(e){ return {}; }
+  }
+  function saveStorage(data){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){}
+  }
+
+  var store = loadStorage();
+
+  // ---------- DOM refs ----------
+  var boardEl = document.getElementById("board");
+  var opPickerEl = document.getElementById("opPicker");
+  var targetNumEl = document.getElementById("targetNum");
+  var movesLeftEl = document.getElementById("movesLeft");
+  var resultEl = document.getElementById("result");
+  var resultTitleEl = document.getElementById("resultTitle");
+  var resultSubEl = document.getElementById("resultSub");
+  var shareGridEl = document.getElementById("shareGrid");
+  var countdownEl = document.getElementById("countdown");
+  var streakNumEl = document.getElementById("streakNum");
+  var tallyMarksEl = document.getElementById("tallyMarks");
+  var dayLabelEl = document.getElementById("dayLabel");
+  var adBottomEl = document.getElementById("adSlotBottom");
+  var undoBtn = document.getElementById("undoBtn");
+  var resetBtn = document.getElementById("resetBtn");
+
+  dayLabelEl.textContent = "Day " + dayNumber();
+  targetNumEl.textContent = puzzle.target;
+
+  function renderTallyMarks(streak){
+    tallyMarksEl.innerHTML = "";
+    var full = Math.floor(streak/5), rem = streak % 5;
+    for(var g=0; g<full; g++){
+      var grp = document.createElement("div"); grp.className="grp";
+      for(var i=0;i<4;i++){ var bar=document.createElement("div"); bar.className="bar"; grp.appendChild(bar); }
+      var slash = document.createElement("div"); slash.className="slash"; grp.appendChild(slash);
+      tallyMarksEl.appendChild(grp);
+    }
+    if(rem>0){
+      var grp2 = document.createElement("div"); grp2.className="grp";
+      for(var j=0;j<rem;j++){ var bar2=document.createElement("div"); bar2.className="bar"; grp2.appendChild(bar2); }
+      tallyMarksEl.appendChild(grp2);
+    }
+  }
+
+  function updateStreakDisplay(){
+    var streak = store.streak || 0;
+    streakNumEl.textContent = streak;
+    renderTallyMarks(streak);
+  }
+  updateStreakDisplay();
+
+  // ---------- Rendering ----------
+  function renderBoard(){
+    boardEl.innerHTML = "";
+    tiles.forEach(function(t){
+      var b = document.createElement("button");
+      b.className = "tile" + (selected.indexOf(t.id) > -1 ? " selected" : "");
+      b.textContent = t.val;
+      b.setAttribute("data-id", t.id);
+      b.addEventListener("click", function(){ onTileClick(t.id); });
+      boardEl.appendChild(b);
+    });
+    movesLeftEl.textContent = tiles.length > 1 ? ("Combine " + (tiles.length-1) + " more time" + (tiles.length-1===1?"":"s")) : "";
+    undoBtn.disabled = history.length === 0 || finished;
+    resetBtn.disabled = history.length === 0 || finished;
+    renderOpPicker();
+  }
+
+  function renderOpPicker(){
+    opPickerEl.innerHTML = "";
+    if(selected.length !== 2) return;
+    var a = tiles.find(function(t){ return t.id===selected[0]; });
+    var b = tiles.find(function(t){ return t.id===selected[1]; });
+    if(!a || !b) return;
+    var ops = ["+","-","×"];
+    if(a.val % b.val === 0 || b.val % a.val === 0) ops.push("÷");
+    ops.forEach(function(op){
+      var btn = document.createElement("button");
+      btn.className = "op-btn";
+      btn.textContent = op;
+      btn.addEventListener("click", function(){ combine(a.id,b.id,op); });
+      opPickerEl.appendChild(btn);
+    });
+  }
+
+  function onTileClick(id){
+    if(finished) return;
+    var idx = selected.indexOf(id);
+    if(idx > -1){ selected.splice(idx,1); renderBoard(); return; }
+    if(selected.length >= 2){ selected = []; }
+    selected.push(id);
+    renderBoard();
+  }
+
+  function combine(id1, id2, op){
+    history.push(JSON.parse(JSON.stringify(tiles)));
+    var a = tiles.find(function(t){ return t.id===id1; });
+    var b = tiles.find(function(t){ return t.id===id2; });
+    var res;
+    if(op==="+") res = a.val+b.val;
+    else if(op==="-") res = Math.abs(a.val-b.val);
+    else if(op==="×") res = a.val*b.val;
+    else res = (a.val % b.val===0) ? a.val/b.val : b.val/a.val;
+
+    tiles = tiles.filter(function(t){ return t.id!==id1 && t.id!==id2; });
+    tiles.push({ id: "r"+Math.random().toString(36).slice(2), val: res });
+    selected = [];
+    movesUsed++;
+    renderBoard();
+
+    if(tiles.length === 1){
+      finishGame(tiles[0].val === puzzle.target);
+    }
+  }
+
+  function undo(){
+    if(history.length===0 || finished) return;
+    tiles = history.pop();
+    selected = [];
+    movesUsed = Math.max(0, movesUsed-1);
+    renderBoard();
+  }
+  function resetBoard(){
+    if(finished) return;
+    tiles = puzzle.nums.map(function(v,i){ return {id:"t"+i+"_"+Math.random().toString(36).slice(2), val:v}; });
+    history = [];
+    selected = [];
+    movesUsed = 0;
+    renderBoard();
+  }
+
+  undoBtn.addEventListener("click", undo);
+  resetBtn.addEventListener("click", resetBoard);
+
+  // ---------- Finish / streak / share ----------
+  function finishGame(won){
+    finished = true;
+    var lastDate = store.lastPlayedDate;
+    var streak = store.streak || 0;
+    if(won){
+      if(lastDate === prevDayKey()) streak = streak + 1;
+      else streak = 1;
+    } else {
+      streak = 0;
+    }
+    store.streak = streak;
+    store.lastPlayedDate = key;
+    store.lastResult = won ? "win" : "lose";
+    store.lastMoves = movesUsed;
+    saveStorage(store);
+    updateStreakDisplay();
+    showResult(won);
+    adBottomEl.style.display = "flex";
+  }
+
+  function prevDayKey(){
+    var d = new Date();
+    d.setDate(d.getDate()-1);
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+
+  function showResult(won){
+    resultEl.className = "result show " + (won ? "win" : "lose");
+    resultTitleEl.textContent = won ? "Solved it" : "Not today";
+    resultSubEl.textContent = won
+      ? ("Reached " + puzzle.target + " in " + movesUsed + " move" + (movesUsed===1?"":"s") + ".")
+      : ("Landed on " + tiles[0].val + " — target was " + puzzle.target + ".");
+
+    shareGridEl.innerHTML = "";
+    for(var i=0;i<3;i++){
+      var sq = document.createElement("span");
+      sq.style.background = won ? "var(--sage)" : (i < movesUsed ? "var(--mustard)" : "var(--line)");
+      shareGridEl.appendChild(sq);
+    }
+    startCountdown();
+  }
+
+  function startCountdown(){
+    function tick(){
+      var now = new Date();
+      var next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+      var diff = next - now;
+      var h = Math.floor(diff/3600000);
+      var m = Math.floor((diff%3600000)/60000);
+      var s = Math.floor((diff%60000)/1000);
+      countdownEl.innerHTML = "Next puzzle in <b>" + String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0") + "</b>";
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  document.getElementById("shareBtn").addEventListener("click", function(){
+    var won = store.lastResult === "win";
+    var line = "TALLY — Day " + dayNumber() + "\n" + (won ? ("Solved in " + store.lastMoves + "/3\n") : "Missed it\n");
+    line += (won ? "🟩🟩🟩".slice(0, store.lastMoves*2) : "⬜⬜⬜");
+    line += "\nstreak: " + (store.streak||0);
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(line).then(function(){
+        var btn = document.getElementById("shareBtn");
+        var old = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(function(){ btn.textContent = old; }, 1500);
+      });
+    }
+  });
+
+  // ---------- Already played today? ----------
+  if(store.lastPlayedDate === key){
+    finished = true;
+    boardEl.style.display = "none";
+    document.querySelector(".target-card").style.display = "none";
+    document.getElementById("movesLeft").textContent = "";
+    resultEl.className = "result show " + (store.lastResult==="win" ? "win" : "lose");
+    resultTitleEl.textContent = store.lastResult==="win" ? "Solved it" : "Not today";
+    resultSubEl.textContent = store.lastResult==="win"
+      ? ("Reached today's target in " + store.lastMoves + " move" + (store.lastMoves===1?"":"s") + ".")
+      : "Come back tomorrow for a new one.";
+    shareGridEl.innerHTML = "";
+    for(var i=0;i<3;i++){
+      var sq = document.createElement("span");
+      sq.style.background = store.lastResult==="win" ? "var(--sage)" : (i < (store.lastMoves||0) ? "var(--mustard)" : "var(--line)");
+      shareGridEl.appendChild(sq);
+    }
+    startCountdown();
+    adBottomEl.style.display = "flex";
+  } else {
+    renderBoard();
+  }
+
+  // ---------- Modal ----------
+  var modalBackdrop = document.getElementById("modalBackdrop");
+  document.getElementById("helpBtn").addEventListener("click", function(){ modalBackdrop.classList.add("show"); });
+  document.getElementById("modalClose").addEventListener("click", function(){ modalBackdrop.classList.remove("show"); });
+  modalBackdrop.addEventListener("click", function(e){ if(e.target===modalBackdrop) modalBackdrop.classList.remove("show"); });
+
+  // Show how-to-play automatically on a visitor's very first visit
+  if(!store.seenIntro){
+    modalBackdrop.classList.add("show");
+    store.seenIntro = true;
+    saveStorage(store);
+  }
+})();
+</script>
+
+</body>
+</html>
